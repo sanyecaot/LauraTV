@@ -1,0 +1,46 @@
+name: Build SideStoreTranslator.dylib
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-ios-dylib:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check project structure and files
+        run: |
+          ls -la
+          ls -la Sources Resources || true
+
+      - name: Run build.sh
+        run: |
+          if [ ! -f build.sh ]; then
+            echo "ERROR: build.sh not found in repository root."
+            exit 1
+          fi
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Locate built dylib
+        id: find_dylib
+        run: |
+          DYLIB_PATH=$(find . -maxdepth 4 -name "SideStoreTranslator.dylib" -print -quit)
+          if [ -z "$DYLIB_PATH" ]; then
+            echo "ERROR: SideStoreTranslator.dylib was not generated."
+            find . -maxdepth 3 -not -path '*/.*'
+            exit 1
+          fi
+          echo "DYLIB_PATH=$DYLIB_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload SideStoreTranslator.dylib artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SideStoreTranslator-dylib
+          path: ${{ steps.find_dylib.outputs.DYLIB_PATH }}
+          if-no-files-found: error
