@@ -1,0 +1,22 @@
+name: Build dylib
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compile arm64 dylib
+        run: |
+          clang -dynamiclib -arch arm64 *.c -o libmytv.dylib
+
+      - name: Upload dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: libmytv
+          path: libmytv.dylib
